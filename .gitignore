@@ -3,6 +3,7 @@ node_modules/
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+/playwright/.auth/
 
 # File hệ điều hành
 .DS_Store
