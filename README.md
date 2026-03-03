@@ -14,6 +14,7 @@ Dùng Playwright (Typescript) để chạy test cho website MCQs
 
 - **Framework:** Playwright Test
 - **Ngôn ngữ:** TypeScript
-- **Kỹ thuật:** \* Mock API / Network Intercepting (Chặn gọi API thật để test UI độc lập).
+- **Kỹ thuật:**
+  - Mock API / Network Intercepting (Chặn gọi API thật để test UI độc lập).
   - Multi-Context (Mở nhiều trình duyệt ẩn danh cùng lúc để test luồng Đa người dùng).
   - Download Intercepting (Bắt và kiểm tra file tải về).
