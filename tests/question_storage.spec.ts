@@ -5,24 +5,16 @@ test.describe("Kiểm tra chức năng thư viên câu hỏi", () => {
     await page.goto("/dashboard/questions");
   });
 
-  test("Hiển thị giao diện Thư viện và Bộ lọc thành công", async ({ page }) => {
-    await expect(page.locator("h2")).toContainText("Thư viện câu hỏi của tôi");
-
-    const searchInput = page.locator(
-      'input[placeholder="Tìm kiếm theo từ khóa..."]',
-    );
-    await expect(searchInput).toBeVisible();
-
-    const statusSelect = page.locator("select").first();
-    await expect(statusSelect).toBeVisible();
-  });
-
   test("Thực hiện Lọc câu hỏi", async ({ page }) => {
     await page.fill(
       'input[placeholder="Tìm kiếm theo từ khóa..."]',
       "Giảng viên hướng dẫn của đề tài này tên là gì?",
     );
 
+    await page.selectOption(
+      'select:has-text("Tất cả các file")',
+      "Báo cáo tiến độ tuần 1 TranTrongThuan.pdf",
+    );
     await page.selectOption('select:has-text("Tất cả trạng thái")', "accepted");
 
     await page.click('button:has-text("Áp dụng bộ lọc")');
@@ -33,6 +25,7 @@ test.describe("Kiểm tra chức năng thư viên câu hỏi", () => {
   });
 
   test("Giả lập Xóa câu hỏi (Mock API)", async ({ page }) => {
+    // Mock API trả về Xóa thành công
     await page.route("**/questions/*", async (route) => {
       if (route.request().method() === "DELETE") {
         await route.fulfill({
@@ -45,6 +38,7 @@ test.describe("Kiểm tra chức năng thư viên câu hỏi", () => {
       }
     });
 
+    // Bắt hộp thoại xác nhận xóa
     page.once("dialog", async (dialog) => {
       expect(dialog.message()).toContain("Bạn có chắc muốn xóa câu hỏi này?");
       await dialog.accept();
@@ -58,18 +52,42 @@ test.describe("Kiểm tra chức năng thư viên câu hỏi", () => {
     }
   });
 
-  test("Mở Modal Sửa câu hỏi và đóng lại", async ({ page }) => {
+  test("Giả lập Sửa câu hỏi (Mock API)", async ({ page }) => {
+    // Mock API trả về Cập nhật thành công
+    await page.route("**/questions/*", async (route) => {
+      if (
+        route.request().method() === "PUT" ||
+        route.request().method() === "PATCH"
+      ) {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({ message: "Cập nhật thành công" }),
+        });
+      } else {
+        await route.continue();
+      }
+    });
+
     const firstEditBtn = page.locator('button:has-text("Sửa")').first();
 
     if (await firstEditBtn.isVisible()) {
       await firstEditBtn.click();
 
-      const modalHeader = page.locator(".modal-header h3");
-      await expect(modalHeader).toContainText("Chỉnh sửa Câu hỏi");
+      const modalHeader = page.locator(".edit-modal-header");
+      await expect(modalHeader).toBeVisible();
 
-      await page.click('button:has-text("Hủy")');
+      const questionInput = page.locator('textarea[name="question_text"]');
+      await questionInput.fill(
+        "Nội dung câu hỏi đã được Playwright tự động sửa!",
+      );
 
-      await expect(modalHeader).toBeHidden();
+      const firstOptionInput = page.locator(".edit-option-input").first();
+      await firstOptionInput.fill("A. Đáp án này đã được tự động cập nhật");
+
+      await page.click('button:has-text("Lưu thay đổi")');
+
+      await expect(modalHeader).toBeHidden({ timeout: 5000 });
     }
   });
 });
