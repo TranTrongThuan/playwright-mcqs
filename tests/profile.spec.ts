@@ -1,7 +1,8 @@
 import { test, expect } from "@playwright/test";
 
-test.describe("Kiểm tra chức năng Hồ sơ cá nhân (Profile)", () => {
+test.describe("Kiểm tra chức năng tài khoản", () => {
   const currentPassword = "testtest";
+
   test.beforeEach(async ({ page }) => {
     await page.goto("/dashboard/profile");
   });
@@ -12,6 +13,7 @@ test.describe("Kiểm tra chức năng Hồ sơ cá nhân (Profile)", () => {
     const nameInput = page.locator('input[name="full_name"]');
     await expect(nameInput).toBeEnabled();
 
+    // Random tên với sđt
     const newName = `Test Name ${Math.floor(Math.random() * 1000)}`;
     const newPhone = `09${Math.floor(Math.random() * 100000000)}`;
 
@@ -32,6 +34,7 @@ test.describe("Kiểm tra chức năng Hồ sơ cá nhân (Profile)", () => {
   test("Báo lỗi khi nhập sai dữ liệu", async ({ page }) => {
     await page.click('button:has-text("Chỉnh sửa")');
 
+    // Bỏ trống tên
     await page.fill('input[name="full_name"]', "");
     await page.click('button:has-text("Lưu thay đổi")');
 
@@ -39,8 +42,9 @@ test.describe("Kiểm tra chức năng Hồ sơ cá nhân (Profile)", () => {
       "Họ tên phải có ít nhất 2 ký tự",
     );
 
-    await page.fill('input[name="full_name"]', "Valid Name");
-    await page.fill('input[name="phone_number"]', "abcxyz");
+    // Test sđt sai
+    await page.fill('input[name="full_name"]', "Cho Do");
+    await page.fill('input[name="phone_number"]', "docaobang");
     await page.click('button:has-text("Lưu thay đổi")');
 
     await expect(page.locator(".message.error")).toContainText(
@@ -56,7 +60,6 @@ test.describe("Kiểm tra chức năng Hồ sơ cá nhân (Profile)", () => {
     await page.click('button:has-text("Chỉnh sửa")');
 
     await nameInput.fill("Cho Do");
-
     await page.click('button:has-text("Hủy")');
 
     await expect(nameInput).toBeDisabled();
@@ -65,12 +68,11 @@ test.describe("Kiểm tra chức năng Hồ sơ cá nhân (Profile)", () => {
 
   test("Báo lỗi khi mật khẩu mới quá ngắn", async ({ page }) => {
     await page.fill('input[name="old_password"]', currentPassword);
-    await page.fill('input[name="new_password"]', "12345"); // Mới có 5 ký tự
+    await page.fill('input[name="new_password"]', "12345");
     await page.fill('input[name="confirm_password"]', "12345");
 
     await page.click('button:has-text("Đổi mật khẩu")');
 
-    // Khớp với frontend của bạn
     await expect(page.locator(".message.error")).toContainText(
       "Mật khẩu mới phải có ít nhất 6 ký tự",
     );
@@ -95,12 +97,10 @@ test.describe("Kiểm tra chức năng Hồ sơ cá nhân (Profile)", () => {
 
     await page.click('button:has-text("Đổi mật khẩu")');
 
-    // Backend sẽ trả về lỗi, Playwright đợi thông báo lỗi hiện lên
     await expect(page.locator(".message.error")).toBeVisible();
   });
 
-  test("Giả lập Đổi mật khẩu thành công (Mock API)", async ({ page }) => {
-    // 1. Chặn request API đổi mật khẩu (method PUT tới /users/*) và trả về Fake Success
+  test("Giả lập Đổi mật khẩu thành công (Dùng API)", async ({ page }) => {
     await page.route("**/users/*", async (route) => {
       if (route.request().method() === "PUT") {
         await route.fulfill({
@@ -113,14 +113,12 @@ test.describe("Kiểm tra chức năng Hồ sơ cá nhân (Profile)", () => {
       }
     });
 
-    // 2. Điền thông tin hợp lệ
     await page.fill('input[name="old_password"]', currentPassword);
     await page.fill('input[name="new_password"]', "newpass123");
     await page.fill('input[name="confirm_password"]', "newpass123");
 
     await page.click('button:has-text("Đổi mật khẩu")');
 
-    // 3. Kiểm tra xem Frontend có hiện thông báo thành công xanh lá không
     await expect(page.locator(".message.success")).toContainText(
       "Đổi mật khẩu thành công!",
     );

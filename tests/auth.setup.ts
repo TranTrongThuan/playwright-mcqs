@@ -1,12 +1,11 @@
-// tests/auth.setup.ts
 import { test as setup, expect } from "@playwright/test";
 import path from "path";
 
-// Đường dẫn file lưu trữ trạng thái đăng nhập
+// Lưu session login
 const authFile = path.join(__dirname, "../playwright/.auth/user.json");
 
 setup("Authenticate (Đăng nhập 1 lần)", async ({ page }) => {
-  // Thay thế bằng user dùng chung cho toàn bộ quá trình test
+  // Acc test
   const TEST_USER = {
     username: "Test100",
     password: "testtest",
@@ -14,14 +13,13 @@ setup("Authenticate (Đăng nhập 1 lần)", async ({ page }) => {
 
   await page.goto("/login");
 
-  // Thực hiện các thao tác đăng nhập
+  // Login
   await page.fill("#username", TEST_USER.username);
   await page.fill("#password", TEST_USER.password);
   await page.click('button[type="submit"]');
 
-  // Đợi cho đến khi trang chuyển hướng thành công về dashboard
   await page.waitForURL(/\/dashboard/);
 
-  // Quan trọng nhất: Lưu lại trạng thái (LocalStorage, Cookies...) vào file
+  // Lưu ra file
   await page.context().storageState({ path: authFile });
 });
